@@ -1,0 +1,92 @@
+﻿@model PaymentProcessor.Models.HomeIndexViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Upload a small text-based PDF and process it. (Demo)</p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model?.ErrorMessage))
+{
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <p class="text-danger">@Html.Encode(Model.ErrorMessage)</p>
+        </div>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <form id="uploadForm" enctype="multipart/form-data" method="post" asp-action="Upload">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label asp-for="File" class="form-label">PDF file</label>
+                <input asp-for="File" type="file" class="form-control" accept="application/pdf" />
+                <span asp-validation-for="File" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DocumentType" class="form-label">Document type</label>
+                <select asp-for="DocumentType" class="form-select">
+                    <option value="invoice">Invoice</option>
+                    <option value="bill">Bill</option>
+                    <option value="statement">Statement</option>
+                </select>
+            </div>
+
+            <button id="uploadBtn" type="submit" class="btn btn-primary">Upload & Process</button>
+
+            @* Status / response area shown after submit; populated from model *@
+            @if (!string.IsNullOrEmpty(Model?.ResponseMessage) || !string.IsNullOrEmpty(Model?.CorrelationId))
+            {
+                <div class="mt-3">
+                    @if (!string.IsNullOrEmpty(Model?.CorrelationId))
+                    {
+                        <div class="mb-2"><strong>Correlation ID:</strong> @Html.Encode(Model.CorrelationId)</div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model?.ResponseMessage))
+                    {
+                        <div class="mb-2"><strong>Response:</strong></div>
+                        <pre style="white-space:pre-wrap;word-break:break-word;">@Html.Encode(Model.ResponseMessage)</pre>
+                    }
+                    @if (Model?.SubmittedAt != null)
+                    {
+                        <div class="text-muted">Submitted at: @Model.SubmittedAt.Value.ToString("u")</div>
+                    }
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var form = document.getElementById('uploadForm');
+    if (!form) return;
+
+    // On submit, disable the upload button and show a simple status message.
+    form.addEventListener('submit', function () {
+        var btn = document.getElementById('uploadBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.dataset.origText = btn.textContent;
+            btn.textContent = 'Uploading...';
+        }
+    });
+
+    // Ensure button text is restored when navigating back to the page
+    window.addEventListener('pageshow', function () {
+        var btn = document.getElementById('uploadBtn');
+        if (btn && btn.dataset.origText) {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.origText;
+            delete btn.dataset.origText;
+        }
+    });
+})();
+</script>
+}
